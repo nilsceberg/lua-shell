@@ -1,4 +1,4 @@
-local task = {}
+local pipeline = {}
 
 local function encode_argument(argument)
 	if type(argument) == "string" then
@@ -14,35 +14,42 @@ local function encode_arguments(...)
 	return args
 end
 
-function task.resolve(func, args)
-	return task.new(
-		function()
-			os.execute(string.format("%s %s", func, encode_arguments(unpack(args))))
+function pipeline.resolve(func)
+	return pipeline.new(
+		function(...)
+			os.execute(string.format("%s %s", func, encode_arguments(...)))
 			return 0
 		end
 	)
 end
 
-task.__index = function(tab, func)
-	if func == "_next" or func == "_prev" then return nil end
+pipeline.__index = function(tab, func)
+	--if func == "_next" or func == "_prev" then return nil end
+	local new_pipeline = pipeline.resolve(func)
+	table.insert(self._tasks, new_pipeline._tasks[1])
+	return self
+end
 
-	return function(self, ...)
-		local args = {...}
-		local new_task = task.resolve(func, args)
-		self._next = new_task
-		new_task._prev = self
-		return new_task
+pipeline.__call = function(self, ...)
+	local args = {...}
+	if #args == 0 then
+		run(self)
+	else
+		for i, arg in ipairs(args) do
+			table.insert(self._tasks[#self._tasks].args, arg)
+		end
+		return self
 	end
 end
 
-function task.new(func)
+function pipeline.new(func)
 	local self = {}
-	setmetatable(self, task)
-
-	self._func = func
+	setmetatable(self, pipeline)
+	
+	self._tasks = { {func = func, args = {}} }
 
 	return self
 end
 
-return task
+return pipeline
 

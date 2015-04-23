@@ -7,50 +7,52 @@ local task = require "task"
 
 local lush = {}
 
-function run(task)
+function run(pipeline)
+	print(string.format("[starting %d jobs in pipeline]", #pipeline._tasks))
+	--local pipeline = posix.popen_pipeline(task._funcs, "r")
+	
+	pipeline._tasks[1].func(unpack(pipeline._tasks[1].args))
+
 	-- Walk back to the beginning of the command chain
-	while task._prev ~= nil do
-		task = task._prev
-	end
+	-- while task._prev ~= nil do
+	-- 	task = task._prev
+	-- end
 
-	-- Then start all the processes
-	local jobs = {}
-	repeat
-		local pid = posix.fork()
-		if pid == 0 then
-			posix._exit(task._func())
-		else
-			jobs[pid] = true
-		end
-		task = task._next
-	until task == nil
+	-- -- Then start all the processes
+	-- local jobs = {}
+	-- repeat
+	-- 	local pid = posix.fork()
+	-- 	if pid == 0 then
+	-- 		posix._exit(task._func())
+	-- 	else
+	-- 		jobs[pid] = true
+	-- 	end
+	-- 	task = task._next
+	-- until task == nil
 
-	for p,d in pairs(jobs) do
-		print(string.format("[job %d started]", p))
-	end
+	-- for p,d in pairs(jobs) do
+	-- 	print(string.format("[job %d started]", p))
+	-- end
 
-	local done = false
-	while not done do
-		done = true
-		for p,d in pairs(jobs) do
-			rpid, stat = posix.wait()
-			if stat == "killed" or stat == "exited" then
-				print(string.format("[job %d done]", rpid))
-				jobs[rpid] = nil
-			end
-			done = false
-		end
-	end
+	-- local done = false
+	-- while not done do
+	-- 	done = true
+	-- 	for p,d in pairs(jobs) do
+	-- 		rpid, stat = posix.wait()
+	-- 		if stat == "killed" or stat == "exited" then
+	-- 			print(string.format("[job %d done]", rpid))
+	-- 			jobs[rpid] = nil
+	-- 		end
+	-- 		done = false
+	-- 	end
+	-- end
 end
 
 function lush.start()
 	setmetatable(_G,
 		{
 			__index = function(tab, func)
-				return function(...)
-					local args = {...}
-					return task.resolve(func, args)
-				end
+				return task.resolve(func)
 			end
 		})
 end
