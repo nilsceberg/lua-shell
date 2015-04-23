@@ -48,6 +48,19 @@ pipeline.__call = function(self, ...)
 	end
 end
 
+--getmetatable("").__lt = function(str, self)
+--	if self._cmd_magic ~= pipeline.MAGIC_NUMBER then
+--		return nil
+--	end
+--
+--	return self.out(str)
+--end
+--
+--pipeline.__gt = function(self, file)
+--	print("redirecting input from ", file)
+--	return nil
+--end
+
 function pipeline.new(initial)
 	local self = {}
 	setmetatable(self, pipeline)
@@ -70,6 +83,29 @@ function pipeline.new(initial)
 	
 	self._copy = function()
 		return pipeline.new(self)
+	end
+
+	self.out = function(file)
+		return self.sub(function()
+			local f = io.open(file, "w")
+			if not f then print("failed to open file " .. file .. " for writing") end
+			while true do
+				local buffer = posix.read(0, 1024)
+				if buffer == "" then break end
+				f:write(buffer)
+			end
+			f:close()
+		end)
+	end
+
+	self.sub = function(func)
+		if func == nil then
+			error("subshell: no function provided")
+		end
+		local new_pipeline = pipeline.new(func)
+		local copy = self._copy()
+		table.insert(copy._tasks, new_pipeline._tasks[1])
+		return copy
 	end
 
 	return self
