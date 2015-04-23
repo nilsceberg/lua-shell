@@ -1,3 +1,6 @@
+local posix = require "posix"
+
+
 local pipeline = {}
 
 local function encode_argument(argument)
@@ -17,14 +20,14 @@ end
 function pipeline.resolve(func)
 	return pipeline.new(
 		function(...)
-			os.execute(string.format("%s %s", func, encode_arguments(...)))
+			--os.execute(string.format("%s %s", func, encode_arguments(...)))
+			posix.execp(func, {...})
 			return 0
 		end
 	)
 end
 
-pipeline.__index = function(tab, func)
-	--if func == "_next" or func == "_prev" then return nil end
+pipeline.__index = function(self, func)
 	local new_pipeline = pipeline.resolve(func)
 	table.insert(self._tasks, new_pipeline._tasks[1])
 	return self
