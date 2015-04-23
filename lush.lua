@@ -1,6 +1,7 @@
 #!/bin/lua
 
 local posix = require "posix"
+local readline = require "readline"
 
 local sh = require "shlib"
 local task = require "task"
@@ -75,7 +76,12 @@ function run(pipeline)
 	print("[all jobs done]")
 end
 
-function lush.start()
+function lush.init()
+	-- set up readline
+	readline.set_options{ keeplines=1000, histfile='~/.lush_history' }
+	
+	-- setup __index on _G to allow for
+	-- calling running system commands like lua functions
 	setmetatable(_G,
 		{
 			__index = function(tab, func)
@@ -103,14 +109,12 @@ end
 
 function lush.repl()
 	while running do
-		lush.prompt()
-		io.write(lush.prompt())
 		local command = ""
-		local line = io.read("*line")
+		local line = readline.readline(lush.prompt()) --io.read("*line")
 		while line:match("\\$") do
-			io.write(lush.prompt_continue())
+			--io.write(lush.prompt_continue())
 			command = command .. line:match("(.+)\\$") .. "\n"
-			line = io.read("*line")
+			line = readline.readline(lush.prompt_continue()) --io.read("*line")
 		end
 		command = command .. line
 
@@ -155,6 +159,6 @@ function lush.repl()
 	end
 end
 
-lush.start()
+lush.init()
 lush.repl()
 
