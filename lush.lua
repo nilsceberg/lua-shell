@@ -1,12 +1,12 @@
 #!/bin/lua
 
-local posix = require "posix"
+posix = require "posix"
 local readline = require "readline"
 
 local sh = require "shlib"
 local pipeline = require "pipeline"
 
-local lush = {}
+lush = {}
 
 function run(pipeline)
 	local print = function() end -- disable debug output, lol
@@ -43,7 +43,7 @@ function run(pipeline)
 				posix.close(pipe.fdin) -- close our copy of the read fd
 			end
 
-			posix._exit(task.func(unpack(task.args)))
+			posix._exit(task.func(unpack(task.args)) or 0)
 		else
 			-- if we've piped stdout -> stdin to the newly spawned child,
 			-- close the parent's copies of the pipe fd's
@@ -90,17 +90,17 @@ function lush.init()
 		})
 
 	-- global variables
-	home = os.getenv("HOME")
+	HOME = os.getenv("HOME")
 
-	local f = io.open(home .. "/.lushrc", "r")
+	local f = io.open(HOME .. "/.lushrc", "r")
 	if f then
 		f:close()
-		dofile(home .. "/.lushrc")
+		dofile(HOME .. "/.lushrc")
 	end
 end
 
 function lush.prompt()
-	return string.format("\x1b[32m[%s@%s:%s (git?)] [%s]\n\x1b[31m$\x1b[0m ", os.getenv("USER"), os.getenv("HOST"), "~", "00:00:00")
+	return string.format("%s $ ", posix.getcwd())
 end
 
 function lush.prompt_continue()
@@ -137,8 +137,11 @@ function lush.repl()
 				
 				-- if it's a command pipeline or a function, execute it
 				if type(result) == "function" or (type(result) == "table" and result._cmd_magic == pipeline.MAGIC_NUMBER) then
-					result()
-				else
+					local status, result = pcall(result)
+					if not status then
+						print(string.format("\x1b[31m%s\x1b[0m", result))
+					end
+				elseif result then
 					-- otherwise, just print it
 					print(string.format("[%s]", tostring(result)))
 				end
