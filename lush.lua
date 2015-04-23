@@ -8,6 +8,8 @@ local task = require "task"
 local lush = {}
 
 function run(pipeline)
+	local print = function() end -- disable debug output, lol
+
 	print(string.format("[starting %d jobs in pipeline]", #pipeline._tasks))
 
 	local jobs = {}
