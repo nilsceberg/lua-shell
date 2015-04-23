@@ -88,6 +88,15 @@ function lush.init()
 				return task.resolve(func)
 			end
 		})
+
+	-- global variables
+	home = os.getenv("HOME")
+
+	local f = io.open(home .. "/.lushrc", "r")
+	if f then
+		f:close()
+		dofile(home .. "/.lushrc")
+	end
 end
 
 function lush.prompt()
@@ -96,10 +105,6 @@ end
 
 function lush.prompt_continue()
 	return "> "
-end
-
-function match_name(line)
-	return line:match("^%s*[A-Za-z0-9_]+%s*$")
 end
 
 local running = true

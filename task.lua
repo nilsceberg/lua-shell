@@ -21,7 +21,6 @@ end
 function pipeline.resolve(func)
 	return pipeline.new(
 		function(...)
-			--os.execute(string.format("%s %s", func, encode_arguments(...)))
 			posix.execp(func, {...})
 			return 0
 		end
@@ -43,7 +42,7 @@ pipeline.__call = function(self, ...)
 	else
 		local copy = self._copy()
 		for i, arg in ipairs(args) do
-			table.insert(copy._tasks[#copy._tasks].args, arg)
+			table.insert(copy._tasks[#copy._tasks].args, ({arg:gsub("~/", os.getenv("HOME") .. "/")})[1])
 		end
 		return copy
 	end
