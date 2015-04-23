@@ -30,28 +30,47 @@ end
 
 pipeline.__index = function(self, func)
 	local new_pipeline = pipeline.resolve(func)
-	table.insert(self._tasks, new_pipeline._tasks[1])
-	return self
+
+	local copy = self._copy()
+	table.insert(copy._tasks, new_pipeline._tasks[1])
+	return copy
 end
 
 pipeline.__call = function(self, ...)
 	local args = {...}
 	if #args == 0 then
-		run(self)
+		return run(self)
 	else
+		local copy = self._copy()
 		for i, arg in ipairs(args) do
-			table.insert(self._tasks[#self._tasks].args, arg)
+			table.insert(copy._tasks[#copy._tasks].args, arg)
 		end
-		return self
+		return copy
 	end
 end
 
-function pipeline.new(func)
+function pipeline.new(initial)
 	local self = {}
 	setmetatable(self, pipeline)
 	
-	self._tasks = { {func = func, args = {}} }
+	self._tasks = { }
+	if type(initial) == "function" then
+		self._tasks[1] = {func = initial, args = {}} 
+	else
+		for i, task in ipairs(initial._tasks) do
+			local args = {}
+			for j, arg in ipairs(task.args) do
+				table.insert(args, arg)
+			end
+			table.insert(self._tasks, { func = task.func, args = args })
+		end
+	end
+
 	self._cmd_magic = pipeline.MAGIC_NUMBER -- magic number
+	
+	self._copy = function()
+		return pipeline.new(self)
+	end
 
 	return self
 end
