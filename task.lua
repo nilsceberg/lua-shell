@@ -2,6 +2,7 @@ local posix = require "posix"
 
 
 local pipeline = {}
+pipeline.MAGIC_NUMBER = 0x1209adb1 
 
 local function encode_argument(argument)
 	if type(argument) == "string" then
@@ -50,6 +51,7 @@ function pipeline.new(func)
 	setmetatable(self, pipeline)
 	
 	self._tasks = { {func = func, args = {}} }
+	self._cmd_magic = pipeline.MAGIC_NUMBER -- magic number
 
 	return self
 end
