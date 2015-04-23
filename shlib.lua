@@ -1,6 +1,6 @@
 local posix = require "posix"
 
-local task = require "task"
+local pipeline = require "pipeline"
 
 
 

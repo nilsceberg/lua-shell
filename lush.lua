@@ -4,7 +4,7 @@ local posix = require "posix"
 local readline = require "readline"
 
 local sh = require "shlib"
-local task = require "task"
+local pipeline = require "pipeline"
 
 local lush = {}
 
@@ -85,7 +85,7 @@ function lush.init()
 	setmetatable(_G,
 		{
 			__index = function(tab, func)
-				return task.resolve(func)
+				return pipeline.resolve(func)
 			end
 		})
 
@@ -136,7 +136,7 @@ function lush.repl()
 				-- handle return value
 				
 				-- if it's a command pipeline or a function, execute it
-				if type(result) == "function" or (type(result) == "table" and result._cmd_magic == task.MAGIC_NUMBER) then
+				if type(result) == "function" or (type(result) == "table" and result._cmd_magic == pipeline.MAGIC_NUMBER) then
 					result()
 				else
 					-- otherwise, just print it
