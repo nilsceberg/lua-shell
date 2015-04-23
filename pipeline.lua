@@ -52,6 +52,7 @@ function pipeline.new(initial)
 	local self = {}
 	setmetatable(self, pipeline)
 	
+	self._capture_output = false
 	self._tasks = { }
 	if type(initial) == "function" then
 		self._tasks[1] = {func = initial, args = {}} 

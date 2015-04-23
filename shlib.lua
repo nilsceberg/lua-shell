@@ -9,6 +9,12 @@ function sub(func)
 	return pipeline.new(func)
 end
 
+function cs(pipeline)
+	local copy = pipeline._copy()
+	copy._capture_output = true
+	return ({run(copy)})[2]
+end
+
 cd = function(path)
 	if not path then
 		path = HOME

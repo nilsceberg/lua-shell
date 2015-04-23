@@ -19,9 +19,9 @@ function run(pipeline)
 		-- set our input to output from last process
 		local oldpipe = { fdin = pipe.fdin, fdout = pipe.fdout }
 
-		-- unless we're about to create the last process, we need to create
+		-- unless we're about to create the last process or supposed to capture the output, we need to create
 		-- a pipe to redirect output to
-		if i ~= #pipeline._tasks then
+		if i ~= #pipeline._tasks or pipeline._capture_output then
 			pipe.fdin, pipe.fdout = posix.pipe()
 		end
 
@@ -35,7 +35,7 @@ function run(pipeline)
 				posix.close(oldpipe.fdout) -- close our copy of the write fd
 			end
 
-			if i ~= #pipeline._tasks then
+			if i ~= #pipeline._tasks or pipeline._capture_output then
 				-- if we're not the last process, we need to redirect out output
 				-- to the next process' input
 				print(string.format("[%d: %d -> 1]", i, pipe.fdout))
@@ -56,6 +56,30 @@ function run(pipeline)
 		end
 	end
 
+	-- if we're supposed to capture the output of the command
+	-- (for command substition), read from the last pipe
+	local output = nil
+	if pipeline._capture_output then
+		-- close our write fd
+		posix.close(pipe.fdout)
+
+		-- read output until eof
+		print("[reading output]")
+		output = ""
+		local buffer = ""
+		while true do
+			buffer = posix.read(pipe.fdin, 1024)
+			if buffer == "" then break end
+			output = output .. buffer
+		end
+		
+		-- trim trailing whitespace
+		output = output:gsub("%s*$", "")
+
+		-- close file descriptor
+		posix.close(pipe.fdin)
+	end
+
 	for p,d in pairs(jobs) do
 		print(string.format("[job %d started]", p))
 	end
@@ -74,6 +98,7 @@ function run(pipeline)
 	end
 
 	print("[all jobs done]")
+	return 0, output
 end
 
 function lush.init()
