@@ -1,6 +1,6 @@
 local posix = require "posix"
 
-local pipeline = require "pipeline"
+local pipeline = require "luashell.pipeline"
 
 function sub(func)
 	if func == nil then
@@ -12,7 +12,7 @@ end
 function cs(pipeline)
 	local copy = pipeline._copy()
 	copy._capture_output = true
-	return ({run(copy)})[2]
+	return ({copy:run()})[2]
 end
 
 cd = function(path)
