@@ -46,7 +46,11 @@ pipeline.__call = function(self, ...)
 	else
 		local copy = self._copy()
 		for i, arg in ipairs(args) do
-			table.insert(copy._tasks[#copy._tasks].args, ({arg:gsub("~/", os.getenv("HOME") .. "/")})[1])
+			if type(arg) == "string" then
+				table.insert(copy._tasks[#copy._tasks].args, ({arg:gsub("~/", os.getenv("HOME") .. "/")})[1])
+			else
+				table.insert(copy._tasks[#copy._tasks].args, ({arg})[1])
+			end
 		end
 		return copy
 	end
@@ -138,7 +142,18 @@ function pipeline:run()
 				posix.close(pipe.fdin) -- close our copy of the read fd
 			end
 
-			posix._exit(task.func(unpack(task.args)) or 0)
+			-- choo choo!
+			local success, result = pcall(task.func, unpack(task.args))
+			
+			-- note that we won't get here if the task is an external command,
+			-- as the image has been replaced
+			if not success then
+				print("error")
+				--print(string.format("\x1b[31mLua error: %s\x1b[0m", result))
+				posix._exit(1)
+			else
+				posix._exit(0)
+			end
 		else
 			-- if we've piped stdout -> stdin to the newly spawned child,
 			-- close the parent's copies of the pipe fd's
