@@ -1,18 +1,33 @@
-#!/bin/lua
-
-posix = require "posix"
+local posix = require "posix"
 local readline = require "readline"
 
 local builtin = require "luashell.builtin"
 local pipeline = require "luashell.pipeline"
 
+local module = {}
 
--- setup __index on _G to allow for
--- calling running system commands like lua functions
-setmetatable(_G,
-{
-	__index = function(tab, func)
-		return pipeline.resolve(func)
+
+function module.pollute(t)
+	-- set up indexing meta table
+	setmetatable(t,
+	{
+		__index = function(tab, func)
+			return pipeline.resolve(func)
+		end
+	})
+	
+	-- load builtins
+	for k,v in pairs(builtin) do
+		t[k] = v
 	end
-})
+end
+
+function module.globalize()
+	-- pollute _G to allow for stuff like
+	-- calling running system commands like Lua functions
+	module.pollute(_G)
+end
+
+
+return module
 

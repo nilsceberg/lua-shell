@@ -52,18 +52,6 @@ pipeline.__call = function(self, ...)
 	end
 end
 
---getmetatable("").__lt = function(str, self)
---	if self._cmd_magic ~= pipeline.MAGIC_NUMBER then
---		return nil
---	end
---
---	return self.out(str)
---end
---
---pipeline.__gt = function(self, file)
---	print("redirecting input from ", file)
---	return nil
---end
 
 function pipeline.new(initial)
 	local self = {}

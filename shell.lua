@@ -1,10 +1,10 @@
 #!/bin/lua
+
+package.path = "./?/init.lua;" .. package.path
+
+local luashell = require "luashell"
 local repl = require "luashell.repl"
-dofile("luashell/init.lua")
 
-
--- global variables
-HOME = os.getenv("HOME")
 
 -- repl settings table
 settings = {
@@ -16,13 +16,18 @@ settings = {
 	end
 }
 
+-- load luashell functionality into global environment
+luashell.globalize()
+
 -- run rc files
-local f = io.open(HOME .. "/.lushrc", "r")
-if f then
-	f:close()
-	dofile(HOME .. "/.lushrc")
+do
+	local home = os.getenv("HOME")
+	local f = io.open(home .. "/.lushrc", "r")
+	if f then
+		f:close()
+		dofile(home .. "/.lushrc")
+	end
 end
-f = nil
 
 -- start shell
 local cmd_loop = repl.new(settings)
@@ -31,5 +36,5 @@ function exit()
 	cmd_loop.running = false
 end
 
-cmd_loop:run();
+cmd_loop:run()
 
