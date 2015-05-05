@@ -19,7 +19,7 @@ echo(fileString)()                         -- echo variable with external progra
 
 function get_ls_args
 {
-	echo "-l ~/projects/luashell"
+	echo "-l ~/projects/lua-shell"
 }
 
 function formatter { echo "$1" $(cat); }
