@@ -1,26 +1,32 @@
 function get_ls_args()
-	return "-l", "~/sts/io/level11/"
+	return "-l", "~/projects/lua-shell/"
 end
 
 function formatter(prefix) print(prefix .. io.read("*a")) end
 
-ls(get_ls_args()):grep("md5.c"):sub(formatter, "FIle found:"):out("/tmp/luashelltest")()
-RED = cs(cat "/tmp/luashelltest")
-echo(RED)
+ls(get_ls_args())                   -- retrieve file list
+	.grep "READ"                    -- filter to find line including 'READ'
+	.grep "-oP" "[^ ]+$"            -- filename only
+	.sub(formatter) "File found: "  -- add label with our formatter function
+	.out "/tmp/luashelltest"()      -- redirect to /tmp/luashelltest
+
+fileString = cs(cat "/tmp/luashelltest")   -- command substitution to put contents of file into variable
+
+echo(fileString)()                         -- echo variable with external program
 
 --[[
  == bash equivalent == 
 
 function get_ls_args
 {
-	echo "-l ~/sts/io/level11/"
+	echo "-l ~/projects/luashell"
 }
 
 function formatter { echo "$1" $(cat); }
 
-ls $(get_ls_args) | grep "md5.c" | formatter "File found:" > /tmp/luashelltest
-RED=$(cat /tmp/luashelltest)
-echo $RED
+ls $(get_ls_args) | grep "READ" | formatter "File found:" > /tmp/luashelltest
+fileString=$(cat /tmp/luashelltest)
+echo $fileString
 
 ]]
 
