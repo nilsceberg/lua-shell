@@ -2,7 +2,7 @@
 
 package.path = "./?/init.lua;" .. package.path
 
-local luashell = require "luashell"
+luashell = require "luashell"
 local repl = require "luashell.repl"
 
 
