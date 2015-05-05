@@ -25,6 +25,13 @@ function module.cd(path)
 	return nil
 end
 
+function module.err(pipeline)
+	return module.sub(function()
+		posix.dup2(1, 2)
+		pipeline()
+	end)
+end
+
 
 return module
 
