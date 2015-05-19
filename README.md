@@ -8,6 +8,7 @@ Unix shell. Thus, the goals of the project are:
 * To provide facilities for creating command pipelines in order to take advantage of the Unix philosophy of combining small, specialized programs to complete a complex task.
 * To provide an improved REPL, compared to the default one of Lua's interactive interpreter.
 
+The project is still very much a work in progress and is not suitable for practical usage.
 
 Examples
 --------
