@@ -79,7 +79,10 @@ function pipeline.new(initial)
 		end
 	end
 
-	self._cmd_magic = pipeline.MAGIC_NUMBER -- magic number
+	-- magic number; used by util.type to determine whether this is
+	-- a pipeline or just another table (which can come in handy since
+	-- nothing in the global environment can be nil anymore...)
+	self._cmd_magic = pipeline.MAGIC_NUMBER
 	
 	self._copy = function()
 		return pipeline.new(self)

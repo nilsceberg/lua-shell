@@ -18,19 +18,30 @@ function module.new(settings)
 	return self
 end
 
+local function is_incomplete(expression)
+	-- if a return statement with the expression produces no error, we
+	-- consider the expression complete
+	local _, err =
+		load(string.format("return (%s)", expression), "shell", "t")
+	if err == nil then return false end
+
+	-- otherwise, the expression is incomplete if it results in an error
+	-- ending in "<eof>"
+	local _, err = load(expression, "shell", "t")
+	return err and err:match("<eof>$") or false
+end
 
 function module:run_once()
-	local command = ""
-	local line = readline.readline(self.settings.prompt()) --io.read("*line")
-	while line:match("\\$") do
-		--io.write(module.prompt_continue())
-		command = command .. line:match("(.+)\\$") .. "\n"
-		line = readline.readline(self.settings.prompt_continue()) --io.read("*line")
+	-- prompt for expression until it's syntactically complete
+	local expression = readline.readline(self.settings.prompt()) .. "\n"
+	while is_incomplete(expression) do
+		expression =
+			expression .. readline.readline(self.settings.prompt_continue())
+			.. "\n"
 	end
-	command = command .. line
 
-	-- first, try returning whatever the command results in
-	local func, err = load(string.format("return (%s)", command), "shell", "t")
+	-- first, try returning whatever the expression evaluates to
+	local func, err = load(string.format("return (%s)", expression), "shell", "t")
 	if func ~= nil then
 		local status, result = pcall(func)
 		
@@ -41,20 +52,26 @@ function module:run_once()
 			-- we're good!
 			-- handle return value
 			
-			-- if it's a command pipeline or a function, execute it
+			-- if it's a command pipeline or a function, execute it and
+			-- replace result with its return value
 			if type(result) == "function" or (type(result) == "pipeline") then
-				local status, result = pcall(result)
+				status, result = pcall(result)
+
+				-- print error and skip result printing
 				if not status then
 					print(string.format("\x1b[31m%s\x1b[0m", result))
+					return
 				end
-			elseif result then
-				-- otherwise, just print it
+			end
+
+			-- print return value
+			if result then
 				print(string.format("[%s]", tostring(result)))
 			end
 		end
 	else
 		-- if that is syntactically wrong, try without the return
-		func = load(command, "shell", "t")
+		local func, err = load(expression, "shell", "t")
 
 		-- if it still results in an error, the fault is the user's,
 		-- so print the error message
