@@ -20,6 +20,8 @@ end
 function module.cd(path)
 	if not path then
 		path = os.getenv("HOME")
+	else
+		path = path:gsub("~/", os.getenv("HOME") .. "/")
 	end
 	posix.chdir(path)
 	return nil

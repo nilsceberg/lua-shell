@@ -42,7 +42,7 @@ function module:run_once()
 			-- handle return value
 			
 			-- if it's a command pipeline or a function, execute it
-			if type(result) == "function" or (type(result) == "table" and result._cmd_magic == pipeline.MAGIC_NUMBER) then
+			if type(result) == "function" or (type(result) == "pipeline") then
 				local status, result = pcall(result)
 				if not status then
 					print(string.format("\x1b[31m%s\x1b[0m", result))

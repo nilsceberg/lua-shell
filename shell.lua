@@ -5,6 +5,8 @@ package.path = "./?/init.lua;" .. package.path
 luashell = require "luashell"
 local repl = require "luashell.repl"
 
+local posix = require "posix"
+
 
 -- repl settings table
 settings = {

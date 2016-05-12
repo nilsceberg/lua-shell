@@ -56,6 +56,10 @@ pipeline.__call = function(self, ...)
 	end
 end
 
+pipeline.__tostring = function(self)
+	return "pipeline: " .. tostring(self._tasks)
+end
+
 
 function pipeline.new(initial)
 	local self = {}
