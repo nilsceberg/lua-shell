@@ -66,52 +66,79 @@ posix_uts = require("posix.sys.utsname")
 utsname = posix_uts.uname()
 HOST=utsname.nodename
 HOME=os.getenv("HOME")
-USER=posix.getlogin()
+USER=os.getenv("USER")
 
 
 -- Set up aliases.
 ls=ls "--color=always"
+vim=nvim
+
+-- Function to quickly upload a file to my stuff directory on epsilon
+function publish(file) return scp(file, "epsilon:public_html/stuff") end
 
 -- Set up a table 'git' with a metatable to
 -- let us run commands like 'git.status' instead of 'git "status"'.
-local _git = git
+git = nil
+_git = git
 git = {}
 setmetatable(git,
 {
-	__index = function(t, func) return _git(func) end
+    __index = function(t, func) return _git(func) end,
+	__call = function(...) return _git(...) end
 })
 
 -- Utility function to reload this file.
 function rrc()
-	dofile(HOME .. "/.lushrc")
-	print("RC file reloaded.")
+    dofile(HOME .. "/.lushrc")
+    print("RC file reloaded.")
 end
 
 -- Make the prompt path a little prettier by substituting
 -- the home part of the path with '~'.
 function make_pretty_path()
-	return posix.getcwd():gsub(HOME, "~")
+    return posix.getcwd():gsub(HOME, "~")
 end
 
 -- Extract the currently checked out branch of the Git repository we're in.
 -- stderr is simply redirected to stdout so that, in case we're not in a Git repository,
 -- the error message is just piped to grep but won't match.
 function get_git_branch()
-	branch = cs(err(git.branch) . grep "-oP" "\\* .+$" . grep "-oP" "[^* ]+")
-	if branch == "" then
-		return ""
+    branch = cs(err(git.branch) . grep "-oP" "\\* .+$" . grep "-oP" "[^* ]+")
+    if branch == "" then
+        return ""
+    else
+        return string.format(" [%s]", branch)
+    end
+end
+
+local new_results
+
+local function format_results()
+	local results = new_results
+	new_results = nil
+
+	if results and #results>0 then
+		return string.format("\x01\x1b[%d;1m[%s]",
+			results[1] and 36 or 31, stringify_multiple(unpack(results)))
 	else
-		return string.format(" [%s]", branch)
+		return ""
 	end
 end
 
 -- Actually set the prompt. This function gets called each time the prompt is printed.
 -- Escape sequences are ANSI colours.
 function settings.prompt()
-	return string.format("\x01\x1b[32;1m\x02[%s@%s:%s]%s [%s]\n\x01\x1b[31;1m\x02$ \x01\x1b[0m\x02",
-			USER, HOST, make_pretty_path(), get_git_branch(), os.date("%H:%M:%S"))
+    return string.format("\x01\x1b[32;1m\x02[%s@%s:%s]%s [%s] %s\n\x01\x1b[31;1m\x02$ \x01\x1b[0m\x02",
+            USER, HOST, make_pretty_path(), get_git_branch(), os.date("%H:%M:%S"), format_results())
 end
 
+function settings.prompt_continue()
+    return "\x01\x1b[31;1m\x02$>\x01\x1b[0m\x02"
+end
+
+function settings.display_results(results)
+	new_results = results
+end
 ```
 
 License
