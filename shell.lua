@@ -6,6 +6,12 @@ luashell = require "luashell"
 local repl = require "luashell.repl"
 
 local posix = require "posix"
+local sig = require "posix.signal"
+
+
+sig.signal(sig.SIGINT, function()
+	io.stderr:write("\n\x1b[31minterrupted\x1b[0m\n")
+end)
 
 
 -- returns a string with tostring applied to all the arguments, separated

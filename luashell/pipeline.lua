@@ -228,6 +228,9 @@ function pipeline:run()
 		for p,d in pairs(jobs) do
 			local rpid, stat, code = posix.wait()
 
+			done = false
+			if rpid == nil then break end
+
 			-- if this is the last process, save its exit code as our
 			-- return value
 			if jobs[rpid].last then
@@ -239,7 +242,6 @@ function pipeline:run()
 				print(string.format("[job %d done]", rpid))
 				jobs[rpid] = nil
 			end
-			done = false
 		end
 	end
 
