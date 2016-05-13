@@ -53,6 +53,9 @@ function module.exec(file, ...)
 	return pipeline.resolve(file)
 end
 
+function module.eval(string)
+	return load(string, "eval", "t")()
+end
 
 
 return module
