@@ -8,6 +8,14 @@ local repl = require "luashell.repl"
 local posix = require "posix"
 
 
+-- returns a string with tostring applied to all the arguments, separated
+-- by commas
+function stringify_multiple(first, ...)
+	local rest = {...}
+	return tostring(first) ..
+		(#rest > 0 and (", " .. stringify_multiple(...)) or "")
+end
+
 -- repl settings table
 settings = {
 	prompt = function()
@@ -15,6 +23,12 @@ settings = {
 	end,
 	prompt_continue = function()
 		return "> "
+	end,
+	display_results = function(results)
+		if #results > 0 then
+			print(string.format("[%s]",
+				stringify_multiple(unpack(results))))
+		end
 	end
 }
 
@@ -39,24 +53,14 @@ function exit()
 	return "goodbye!"
 end
 
--- returns a string with tostring applied to all the arguments, separated
--- by commas
-local function stringify_multiple(first, ...)
-	local rest = {...}
-	return tostring(first) ..
-		(#rest > 0 and (", " .. stringify_multiple(...)) or "")
-end
-
+RETVAL=0
 -- loop until exit is called
 cmd_loop.running = true
 while cmd_loop.running do
-	local result = cmd_loop:run_once()
+	local results = cmd_loop:run_once()
 	
-	-- print result
-	if #result > 0 then
-		print(string.format("[%s]",
-			stringify_multiple(unpack(result))))
-	end
+	-- display result
+	settings.display_results(results)
 
 	-- make return value globally accessible
 	-- (hasn't necessarily changed since last loop)
