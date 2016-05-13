@@ -169,7 +169,9 @@ function pipeline:run()
 				posix.close(oldpipe.fdout)
 			end
 
-			jobs[pid] = true
+			-- if this is the last process in the chain we need to save
+			-- its return value later
+			jobs[pid] = {last = (i == #self._tasks)}
 		end
 	end
 
@@ -201,11 +203,21 @@ function pipeline:run()
 		print(string.format("[job %d started]", p))
 	end
 
+	-- wait for all jobs to terminate
 	local done = false
+	local return_value
 	while not done do
 		done = true
 		for p,d in pairs(jobs) do
-			rpid, stat = posix.wait()
+			local rpid, stat, code = posix.wait()
+
+			-- if this is the last process, save its exit code as our
+			-- return value
+			if jobs[rpid].last then
+				return_value = code
+			end
+
+			-- mark as dead
 			if stat == "killed" or stat == "exited" then
 				print(string.format("[job %d done]", rpid))
 				jobs[rpid] = nil
@@ -215,7 +227,8 @@ function pipeline:run()
 	end
 
 	print("[all jobs done]")
-	return 0, output
+
+	return return_value == 0, return_value, output
 end
 
 

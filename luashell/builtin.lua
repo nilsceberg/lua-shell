@@ -12,9 +12,13 @@ function module.sub(func)
 end
 
 function module.cs(pipeline)
+	assert(type(pipeline) == "pipeline")
+
 	local copy = pipeline._copy()
 	copy._capture_output = true
-	return ({copy:run()})[2]
+
+	local success, retval, output = copy:run()
+	return output, retval
 end
 
 function module.cd(path)
@@ -33,7 +37,6 @@ function module.err(pipeline)
 		pipeline()
 	end)
 end
-
 
 return module
 

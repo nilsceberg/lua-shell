@@ -36,7 +36,30 @@ local cmd_loop = repl.new(settings)
 
 function exit()
 	cmd_loop.running = false
+	return "goodbye!"
 end
 
-cmd_loop:run()
+-- returns a string with tostring applied to all the arguments, separated
+-- by commas
+local function stringify_multiple(first, ...)
+	local rest = {...}
+	return tostring(first) ..
+		(#rest > 0 and (", " .. stringify_multiple(...)) or "")
+end
+
+-- loop until exit is called
+cmd_loop.running = true
+while cmd_loop.running do
+	local result = cmd_loop:run_once()
+	
+	-- print result
+	if #result > 0 then
+		print(string.format("[%s]",
+			stringify_multiple(unpack(result))))
+	end
+
+	-- make return value globally accessible
+	-- (hasn't necessarily changed since last loop)
+	RETVAL = cmd_loop.return_value
+end
 
