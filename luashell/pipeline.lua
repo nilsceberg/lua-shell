@@ -1,4 +1,5 @@
 local posix = require "posix"
+local lfs = require "lfs"
 
 
 local pipeline = {}
@@ -19,9 +20,25 @@ local function encode_arguments(...)
 end
 
 function pipeline.resolve(func)
+	-- if it's not an absolute path, search through the paths in PATH
+	if not func:find("/") then
+		for path in os.getenv("PATH"):gmatch("[^:]+") do
+			local full_path = string.format("%s/%s", path, func)
+			local file = lfs.attributes(full_path)
+			if file and file.mode == "file" then
+				func = full_path
+				break
+			end
+		end
+	end
+
+
+
+	-- create a new pipeline object with the specified function
 	return pipeline.new(
 		function(...)
-			posix.execp(func, {...})
+			posix.exec(func, {...})
+			error(string.format("failed to execute '%s'", func))
 			return 0
 		end
 	)
@@ -155,8 +172,8 @@ function pipeline:run()
 			-- note that we won't get here if the task is an external command,
 			-- as the image has been replaced
 			if not success then
-				print("error")
-				--print(string.format("\x1b[31mLua error: %s\x1b[0m", result))
+				io.stderr:write(string.format("\x1b[31merror: %s\x1b[0m\n",
+					result))
 				posix._exit(1)
 			else
 				posix._exit(0)

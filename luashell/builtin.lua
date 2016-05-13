@@ -38,5 +38,22 @@ function module.err(pipeline)
 	end)
 end
 
+module.here = {}
+setmetatable(module.here,
+{
+	__index = function(self, name)
+		return pipeline.resolve("./" .. name)
+	end,
+	__call = function(self, name)
+		return pipeline.resolve("./" .. name)
+	end
+})
+
+function module.exec(file, ...)
+	return pipeline.resolve(file)
+end
+
+
+
 return module
 
