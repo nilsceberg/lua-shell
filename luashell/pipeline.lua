@@ -20,25 +20,32 @@ local function encode_arguments(...)
 end
 
 function pipeline.resolve(func)
-	-- if it's not an absolute path, search through the paths in PATH
+	local executable = nil
+
+	-- if no path is specified, search through the paths in PATH
 	if not func:find("/") then
 		for path in os.getenv("PATH"):gmatch("[^:]+") do
 			local full_path = string.format("%s/%s", path, func)
 			local file = lfs.attributes(full_path)
 			if file and file.mode == "file" then
-				func = full_path
+				executable = full_path
 				break
 			end
 		end
+	else
+		executable = func
 	end
-
-
 
 	-- create a new pipeline object with the specified function
 	return pipeline.new(
 		function(...)
-			posix.exec(func, {...})
-			error(string.format("failed to execute '%s'", func))
+			if executable then
+				posix.exec(executable, {...})
+			end
+
+			error(string.format("failed to execute '%s'%s", func,
+				(executable == nil) and " (did you mean to use 'here'?)"
+				or ""))
 			return 0
 		end
 	)

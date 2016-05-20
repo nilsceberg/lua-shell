@@ -49,7 +49,7 @@ setmetatable(module.here,
 	end
 })
 
-function module.exec(file, ...)
+function module.exec(file)
 	return pipeline.resolve(file)
 end
 
