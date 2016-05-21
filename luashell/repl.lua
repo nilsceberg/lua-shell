@@ -47,6 +47,10 @@ function module:run_once()
 			.. "\n"
 	end
 
+	-- reset color
+	io.write("\x1b[0m")
+	io.flush()
+
 	-- allow leading = to be replaced with 'return' like the standalone Lua
 	-- REPL
 	expression = expression:gsub("^=", "return ")
