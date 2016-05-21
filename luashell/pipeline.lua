@@ -5,16 +5,20 @@ local lfs = require "lfs"
 local pipeline = {}
 pipeline.MAGIC_NUMBER = 0x1209adb1 
 
-local function encode_argument(argument)
-	if type(argument) == "string" then
-		return string.format("\"%s\"", argument:gsub("\"", "\\\""))
-	end
+local function format_flag(flag)
+	-- one dash if single character flag, two otherwise
+	return ("%s%s"):format( (#flag == 1) and "-" or "--", flag)
 end
 
-local function encode_arguments(...)
-	local args = ""
-	for i, arg in ipairs({...}) do
-		args = args .. encode_argument(arg) .. " "
+local function format_argument_table(t)
+	local args = {}
+	for k,v in pairs(t) do
+		if type(k) == "number" then
+			table.insert(args, format_flag(v))
+		else
+			table.insert(args, format_flag(k))
+			table.insert(args, tostring(v))
+		end
 	end
 	return args
 end
@@ -72,8 +76,13 @@ pipeline.__call = function(self, ...)
 		for i, arg in ipairs(args) do
 			if type(arg) == "string" then
 				table.insert(copy._tasks[#copy._tasks].args, ({arg:gsub("~/", os.getenv("HOME") .. "/")})[1])
+			elseif type(arg) == "table" then
+				local new_args = format_argument_table(arg)
+				table.move(new_args,
+					1, #new_args, #copy._tasks[#copy._tasks].args+1,
+					copy._tasks[#copy._tasks].args)
 			else
-				table.insert(copy._tasks[#copy._tasks].args, ({arg})[1])
+				table.insert(copy._tasks[#copy._tasks].args, arg)
 			end
 		end
 		return copy
