@@ -10,27 +10,6 @@ local repl = require "luashell.repl"
 local posix = require "posix"
 local sig = require "posix.signal"
 
-function main(args)
-	sig.signal(sig.SIGINT, function()
-		io.stderr:write("\n\x1b[31minterrupted\x1b[0m\n")
-	end)
-
-	-- load luashell functionality into global environment
-	luashell.globalize()
-
-	-- global variables
-	MODE =
-	{
-		interactive = #args == 0
-	}
-
-	if MODE.interactive then
-		interactive()
-	else
-		dofile(args[1])
-	end
-end
-
 -- returns a string with tostring applied to all the arguments, separated
 -- by commas
 function stringify_multiple(first, ...)
@@ -39,7 +18,7 @@ function stringify_multiple(first, ...)
 		(#rest > 0 and (", " .. stringify_multiple(...)) or "")
 end
 
-function interactive()
+local function interactive()
 	-- repl settings table
 	settings = {
 		prompt = function()
@@ -86,6 +65,27 @@ function interactive()
 		-- make return value globally accessible
 		-- (hasn't necessarily changed since last loop)
 		RETVAL = cmd_loop.return_value
+	end
+end
+
+local function main(args)
+	sig.signal(sig.SIGINT, function()
+		io.stderr:write("\n\x1b[31minterrupted\x1b[0m\n")
+	end)
+
+	-- load luashell functionality into global environment
+	luashell.globalize()
+
+	-- global variables
+	MODE =
+	{
+		interactive = #args == 0
+	}
+
+	if MODE.interactive then
+		interactive()
+	else
+		dofile(args[1])
 	end
 end
 
